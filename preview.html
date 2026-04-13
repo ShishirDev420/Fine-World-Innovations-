@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Trading + RAG | Open Source</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #050510;
+      color: #e0e8ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .font-sora { font-family: 'Sora', system-ui, sans-serif; }
+    .font-mono { font-family: monospace; }
+    .neon-cyan { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+    .neon-magenta { color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+    .neon-violet { color: #8b5cf6; text-shadow: 0 0 10px #8b5cf6, 0 0 20px #8b5cf6; }
+    .neon-green { color: #00ff88; text-shadow: 0 0 10px #00ff88; }
+    .neon-red { color: #ff4466; text-shadow: 0 0 10px #ff4466; }
+    .neon-gold { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+    .gradient-text {
+      background: linear-gradient(90deg, #00ffff, #8b5cf6, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .panel {
+      background: rgba(10, 10, 30, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid #1a1a3a;
+      border-radius: 8px;
+    }
+    .terminal-text { font-family: monospace; font-size: 13px; line-height: 1.8; }
+    .glow-cyan { box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+    .glow-violet { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+    .glow-magenta { box-shadow: 0 0 20px rgba(255, 0, 255, 0.3); }
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+    .ticker-scroll { animation: ticker 60s linear infinite; display: flex; }
+    @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .grid-bg {
+      background-image: linear-gradient(rgba(30, 30, 60, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 30, 60, 0.3) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .scan-line {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, #00ffff, transparent);
+      opacity: 0.1; animation: scan 8s linear infinite; pointer-events: none; z-index: 9998;
+    }
+    @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+    .float { animation: float 6s ease-in-out infinite; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .cursor {
+      position: fixed; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%);
+    }
+    .cursor-ring { width: 32px; height: 32px; border: 1px solid #00ffff; border-radius: 50%; opacity: 0.5; }
+    .cursor-dot { width: 8px; height: 8px; background: #00ffff; border-radius: 50%; margin-top: -20px; margin-left: 12px; }
+    .cursor-price {
+      position: fixed; padding: 8px 12px; font-size: 11px; white-space: nowrap;
+      background: rgba(10, 10, 30, 0.9); border: 1px solid #1a1a3a; border-radius: 6px;
+      margin-left: 40px; margin-top: -10px;
+    }
+    .candle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    .fade-in { animation: fadeIn 1s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .hero-title { animation: slideUp 0.8s ease-out 0.5s both; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    .hero-subtitle { animation: slideUp 0.8s ease-out 0.7s both; }
+    .hero-cta { animation: slideUp 0.8s ease-out 0.9s both; }
+    .section { position: relative; z-index: 10; padding: 100px 24px; max-width: 1200px; margin: 0 auto; }
+    .section-title { font-family: 'Sora'; font-size: 3rem; font-weight: bold; margin-bottom: 1rem; }
+    .btn {
+      padding: 16px 32px; border-radius: 8px; font-weight: 600; text-decoration: none;
+      transition: all 0.3s; display: inline-block;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(139,92,246,0.2));
+      border: 1px solid rgba(0,255,255,0.5);
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, rgba(0,255,255,0.3), rgba(139,92,246,0.3)); transform: scale(1.05); }
+    .card {
+      background: rgba(10, 10, 30, 0.8); backdrop-filter: blur(20px);
+      border: 1px solid #1a1a3a; border-radius: 12px; padding: 24px;
+      transition: all 0.3s; margin-bottom: 16px;
+    }
+    .card:hover { border-color: rgba(0,255,255,0.3); transform: translateY(-4px); }
+    .project-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; background: rgba(10, 10, 30, 0.6);
+      border: 1px solid #1a1a3a; border-radius: 8px; margin-bottom: 8px;
+      transition: all 0.3s; cursor: pointer;
+    }
+    .project-row:hover { background: rgba(20, 20, 50, 0.8); border-color: rgba(0,255,255,0.3); }
+    .tag { padding: 4px 8px; background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.2); border-radius: 4px; font-size: 10px; margin-right: 4px; }
+    .live-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 1s infinite; }
+    .footer { padding: 32px; border-top: 1px solid #1a1a3a; text-align: center; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <canvas id="candleCanvas" class="candle-canvas"></canvas>
+  <div class="scan-line"></div>
+  
+  <div id="cursor" class="cursor" style="display:none;">
+    <div class="cursor-ring"></div>
+    <div class="cursor-dot"></div>
+    <div class="cursor-price">
+      <div>BTC/USD <span id="cursorPrice" class="neon-cyan">$67,842</span></div>
+      <div style="font-size:9px;color:#666;">24H <span id="cursorChange" class="neon-green">+2.34%</span></div>
+    </div>
+  </div>
+
+  <div id="ticker" style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);border-bottom:1px solid #1a1a3a;padding:8px 0;overflow:hidden;">
+    <div id="tickerContent" class="ticker-scroll" style="white-space:nowrap;"></div>
+  </div>
+
+  <main style="padding-top:50px;">
+    <section class="section" style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;" class="grid-bg">
+      <div class="hero-title" style="text-align:center;">
+        <div class="terminal-text panel glow-cyan" style="display:inline-block;padding:16px;margin-bottom:32px;text-align:left;font-size:12px;">
+          <div style="color:#00ff88;">> INITIALIZING AI TRADING SYSTEM... OK</div>
+          <div style="color:#8b5cf6;">> LOADING RAG MODULES... OK</div>
+          <div style="color:#ff00ff;">> SYSTEM READY<span class="blink">█</span></div>
+        </div>
+        <h1 style="font-family:'Sora';font-size:4rem;font-weight:700;line-height:1.1;margin-bottom:24px;">
+          <span class="gradient-text">AI AGENTS</span><br>
+          <span style="color:#e0e8ff;">MEET RAG</span><br>
+          <span class="neon-magenta">TRADE SMARTER</span>
+        </h1>
+        <p class="hero-subtitle terminal-text" style="font-size:1.1rem;color:#888;max-width:600px;margin:0 auto 48px;">
+          <span class="neon-cyan">$</span> Autonomous trading powered by <span class="neon-violet">retrieval-augmented generation</span>. Open source. Open markets.
+        </p>
+        <div class="hero-cta" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+          <a href="#opensource" class="btn btn-primary neon-cyan">./explore_stack</a>
+          <a href="#solution" class="btn panel" style="border-color:rgba(139,92,246,0.3);">cat architecture.md</a>
+        </div>
+        <div class="panel" style="display:inline-block;margin-top:48px;padding:16px 24px;font-size:12px;">
+          <div style="color:#666;margin-bottom:8px;">// MARKET STATUS</div>
+          <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;">
+            <div><span class="neon-cyan">NASDAQ</span> <span class="neon-green">+1.24%</span></div>
+            <div><span class="neon-violet">S&P 500</span> <span class="neon-green">+0.87%</span></div>
+            <div><span class="neon-magenta">DOW</span> <span class="neon-red">-0.32%</span></div>
+            <div><span class="live-dot" style="display:inline-block;margin-right:6px;"></span> <span class="neon-green">MARKETS OPEN</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:80px;color:#00ffff50;font-size:11px;">
+        scroll --help ↓
+      </div>
+    </section>
+
+    <section id="problem" class="section" style="background:linear-gradient(180deg,transparent,#050510);">
+      <div style="text-align:center;margin-bottom:48px;">
+        <div class="terminal-text" style="color:#ff4466;">$ grep -r "TRADING FAILURES" ./logs/</div>
+        <h2 class="section-title"><span class="neon-red">SYSTEM ERRORS</span></h2>
+        <p style="color:#666;">Why human trading fails at scale</p>
+      </div>
+      <div style="max-width:800px;margin:0 auto;">
+        <div class="card" style="border-left:3px solid #ff4466;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:#666;font-size:11px;">ERR_001</span>
+            <span style="background:rgba(255,68,102,0.2);color:#ff4466;padding:4px 8px;border-radius:4px;font-size:10px;border:1px solid rgba(255,68,102,0.3);">CRITICAL</span>
+          </div>
+          <h3 style="font-weight:600;margin-bottom:8px;">INFO_OVERLOAD</h3>
+          <p class="terminal-text" style="color:#888;font-size:12px;">Markets generate terabytes of data daily. Human cognition cannot process this velocity.</p>
+        </div>
+        <div class="card" style="border-left:3px solid #ffd700;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:#666;font-size:11px;">ERR_002</span>
+            <span style="background:rgba(255,215,0,0.2);color:#ffd700;padding:4px 8px;border-radius:4px;font-size:10px;border:1px solid rgba(255,215,0,0.3);">WARNING</span>
+          </div>
+          <h3 style="font-weight:600;margin-bottom:8px;">EMOTIONAL_BIAS</h3>
+          <p class="terminal-text" style="color:#888;font-size:12px;">Fear and greed override rational analysis. 90% of retail traders incur losses.</p>
+        </div>
+        <div class="card" style="border-left:3px solid #ff4466;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:#666;font-size:11px;">ERR_003</span>
+            <span style="background:rgba(255,68,102,0.2);color:#ff4466;padding:4px 8px;border-radius:4px;font-size:10px;border:1px solid rgba(255,68,102,0.3);">CRITICAL</span>
+          </div>
+          <h3 style="font-weight:600;margin-bottom:8px;">LATENCY_LOSS</h3>
+          <p class="terminal-text" style="color:#888;font-size:12px;">Manual research cycles exceed opportunity windows. Speed is edge.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="solution" class="section" style="background:linear-gradient(180deg,#050510,rgba(0,255,255,0.02),#050510);">
+      <div style="text-align:center;margin-bottom:64px;">
+        <div class="terminal-text" style="color:#00ff88;">$ python rag_trading_pipeline.py --mode autonomous</div>
+        <h2 class="section-title"><span class="neon-cyan">RAG + AGENT</span> <span style="color:#888;">ARCHITECTURE</span></h2>
+        <p style="color:#666;">Five-stage autonomous intelligence pipeline</p>
+      </div>
+      <div style="max-width:900px;margin:0 auto;position:relative;">
+        <div style="position:absolute;left:30px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#00ffff,#8b5cf6,#ff00ff);"></div>
+        <div style="display:flex;gap:24px;margin-bottom:32px;align-items:flex-start;">
+          <div style="width:48px;height:48px;background:rgba(10,10,30,0.9);border:1px solid #00ffff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 20px rgba(0,255,255,0.3);">⬡</div>
+          <div class="card glow-cyan" style="flex:1;">
+            <div style="color:#00ffff;font-weight:bold;margin-bottom:8px;">01 — DATA INGESTION</div>
+            <p style="color:#888;font-size:13px;margin-bottom:12px;">Financial reports, SEC filings, news feeds, and market data loaded into vector memory.</p>
+            <code style="font-size:11px;color:#00ff88;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;">&gt; load_data --source all_markets</code>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:32px;align-items:flex-start;">
+          <div style="width:48px;height:48px;background:rgba(10,10,30,0.9);border:1px solid #8b5cf6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 20px rgba(139,92,246,0.3);">◈</div>
+          <div class="card glow-violet" style="flex:1;">
+            <div style="color:#8b5cf6;font-weight:bold;margin-bottom:8px;">02 — CHUNK & EMBED</div>
+            <p style="color:#888;font-size:13px;margin-bottom:12px;">Documents segmented into semantic chunks. Dense vector embeddings capture meaning.</p>
+            <code style="font-size:11px;color:#8b5cf6;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;">&gt; chunk --overlap 50 --strategy semantic</code>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:32px;align-items:flex-start;">
+          <div style="width:48px;height:48px;background:rgba(10,10,30,0.9);border:1px solid #8b5cf6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 20px rgba(139,92,246,0.3);">◇</div>
+          <div class="card glow-violet" style="flex:1;">
+            <div style="color:#8b5cf6;font-weight:bold;margin-bottom:8px;">03 — HYBRID RETRIEVAL</div>
+            <p style="color:#888;font-size:13px;margin-bottom:12px;">BM25 sparse + dense embeddings. Pinpoint accuracy across financial documents.</p>
+            <code style="font-size:11px;color:#8b5cf6;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;">&gt; retrieve --mode hybrid --top-k 10</code>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:32px;align-items:flex-start;">
+          <div style="width:48px;height:48px;background:rgba(10,10,30,0.9);border:1px solid #ff00ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 20px rgba(255,0,255,0.3);">⬢</div>
+          <div class="card glow-magenta" style="flex:1;">
+            <div style="color:#ff00ff;font-weight:bold;margin-bottom:8px;">04 — AGENT REASONING</div>
+            <p style="color:#888;font-size:13px;margin-bottom:12px;">Multi-agent debate. Bull vs Bear positions analyzed. Conviction scored.</p>
+            <code style="font-size:11px;color:#ff00ff;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;">&gt; analyze --agents bull,bear,quant</code>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:flex-start;">
+          <div style="width:48px;height:48px;background:rgba(10,10,30,0.9);border:1px solid #00ff88;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 20px rgba(0,255,136,0.3);">◉</div>
+          <div class="card" style="flex:1;border-color:rgba(0,255,136,0.3);">
+            <div style="color:#00ff88;font-weight:bold;margin-bottom:8px;">05 — EXECUTE</div>
+            <p style="color:#888;font-size:13px;margin-bottom:12px;">Trades fire via broker APIs. Risk limits enforced. Position sized dynamically.</p>
+            <code style="font-size:11px;color:#00ff88;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;">&gt; execute --risk-mode adaptive</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="opensource" class="section">
+      <div style="text-align:center;margin-bottom:48px;">
+        <div class="terminal-text" style="color:#00ffff;">$ ls -la ./ai_trading_agents/</div>
+        <h2 class="section-title"><span class="neon-violet">OPEN SOURCE</span> <span style="color:#888;">AGENTS</span></h2>
+        <p style="color:#666;">Top performing autonomous trading systems</p>
+      </div>
+      <div style="max-width:1000px;margin:0 auto;">
+        <div class="panel" style="display:flex;padding:12px 20px;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;border-bottom:none;">
+          <div style="flex:2;">AGENT</div>
+          <div style="flex:1;text-align:center;">STARS</div>
+          <div style="flex:1;text-align:center;">LANG</div>
+          <div style="flex:1;text-align:center;">STATUS</div>
+        </div>
+        <a href="https://github.com/TraderAlice/OpenAlice" target="_blank" style="text-decoration:none;color:inherit;">
+          <div class="project-row">
+            <div style="display:flex;align-items:center;gap:16px;flex:2;">
+              <div style="width:40px;height:40px;background:rgba(10,10,30,0.8);border:1px solid #1a1a3a;border-radius:8px;display:flex;align-items:center;justify-content:center;">◈</div>
+              <div>
+                <div style="font-weight:bold;" class="neon-cyan">OpenAlice</div>
+                <div style="font-size:11px;color:#666;max-width:300px;">Your one-person Wall Street. File-driven AI trading agent.</div>
+              </div>
+            </div>
+            <div style="flex:1;text-align:center;"><span class="neon-cyan">3,500</span> ★</div>
+            <div style="flex:1;text-align:center;font-size:11px;color:#666;">TypeScript</div>
+            <div style="flex:1;text-align:center;"><span class="live-dot" style="display:inline-block;"></span></div>
+          </div>
+        </a>
+        <a href="https://github.com/HKUDS/AI-Trader" target="_blank" style="text-decoration:none;color:inherit;">
+          <div class="project-row">
+            <div style="display:flex;align-items:center;gap:16px;flex:2;">
+              <div style="width:40px;height:40px;background:rgba(10,10,30,0.8);border:1px solid #1a1a3a;border-radius:8px;display:flex;align-items:center;justify-content:center;">◈</div>
+              <div>
+                <div style="font-weight:bold;" class="neon-violet">AI-Trader</div>
+                <div style="font-size:11px;color:#666;max-width:300px;">Agent-Native Trading Platform. Connect any AI agent.</div>
+              </div>
+            </div>
+            <div style="flex:1;text-align:center;"><span class="neon-violet">13,000</span> ★</div>
+            <div style="flex:1;text-align:center;font-size:11px;color:#666;">Python</div>
+            <div style="flex:1;text-align:center;"><span class="live-dot" style="display:inline-block;"></span></div>
+          </div>
+        </a>
+        <a href="https://github.com/chrisworsey55/atlas-gic" target="_blank" style="text-decoration:none;color:inherit;">
+          <div class="project-row">
+            <div style="display:flex;align-items:center;gap:16px;flex:2;">
+              <div style="width:40px;height:40px;background:rgba(10,10,30,0.8);border:1px solid #1a1a3a;border-radius:8px;display:flex;align-items:center;justify-content:center;">◈</div>
+              <div>
+                <div style="font-weight:bold;" class="neon-magenta">ATLAS</div>
+                <div style="font-size:11px;color:#666;max-width:300px;">Self-improving AI trading agents. Karpathy autoresearch.</div>
+              </div>
+            </div>
+            <div style="flex:1;text-align:center;"><span class="neon-magenta">1,300</span> ★</div>
+            <div style="flex:1;text-align:center;font-size:11px;color:#666;">Python</div>
+            <div style="flex:1;text-align:center;"><span class="live-dot" style="display:inline-block;"></span></div>
+          </div>
+        </a>
+      </div>
+      <div class="panel" style="max-width:1000px;margin:24px auto 0;padding:16px;display:flex;justify-content:space-between;font-size:12px;color:#666;">
+        <span>6 agents indexed</span>
+        <span><span class="live-dot" style="display:inline-block;margin-right:6px;"></span> LIVE</span>
+      </div>
+    </section>
+
+    <section id="cta" class="section" style="text-align:center;min-height:60vh;display:flex;flex-direction:column;justify-content:center;">
+      <div class="terminal-text" style="color:#00ffff;margin-bottom:16px;">$ ./start_trading --mode autonomous</div>
+      <h2 class="section-title"><span class="gradient-text">READY TO TRADE</span><br><span style="color:#888;">WITH MACHINES?</span></h2>
+      <p style="color:#666;max-width:500px;margin:24px auto 48px;">Join the autonomous trading revolution. Clone a repo. Run the demo. Let AI agents do the heavy lifting.</p>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <a href="https://github.com/TraderAlice/OpenAlice" target="_blank" class="btn btn-primary neon-cyan">git clone openalice →</a>
+        <a href="https://github.com/HKUDS/AI-Trader" target="_blank" class="btn panel neon-violet" style="border-color:rgba(139,92,246,0.3);">explore ai-trader →</a>
+      </div>
+      <div class="panel" style="max-width:400px;margin:48px auto 0;padding:16px;">
+        <div style="color:#666;font-size:11px;margin-bottom:8px;">// DISCLAIMER</div>
+        <div class="terminal-text" style="font-size:11px;color:rgba(255,215,0,0.5);">Trading involves risk. Not financial advice. Always paper trade first.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="terminal-text">
+      <span style="color:#00ffff;">root@ai-trading:~#</span> echo $STATUS<br>
+      <span class="neon-green">SYSTEM OPERATIONAL</span><span class="blink">█</span>
+    </div>
+  </footer>
+
+  <script>
+    // Candlestick background animation
+    const canvas = document.getElementById('candleCanvas');
+    const ctx = canvas.getContext('2d');
+    let candles = [];
+    
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function generateCandle(x) {
+      const base = canvas.height / 2;
+      const vol = 30 + Math.random() * 50;
+      const dir = Math.random() > 0.5 ? 1 : -1;
+      const open = base + (Math.random() - 0.5) * vol * 2;
+      const close = open + dir * vol * (0.5 + Math.random() * 0.5);
+      return { x, open, close, high: Math.max(open, close) + Math.random() * 20, low: Math.min(open, close) - Math.random() * 20 };
+    }
+
+    const w = 8, gap = 4;
+    for (let i = 0; i < Math.ceil(canvas.width / (w + gap)) + 20; i++) {
+      candles.push(generateCandle(i * (w + gap)));
+    }
+
+    let lastTime = 0;
+    const scrollSpeed = 40;
+    function animate(currentTime) {
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+      ctx.fillStyle = 'rgba(5, 5, 16, 0.15)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const shift = scrollSpeed * deltaTime;
+      candles.forEach(c => { c.x -= shift; });
+      if (candles[0].x < -20) {
+        candles.shift();
+        candles.push(generateCandle(candles[candles.length - 1].x + w + gap));
+      }
+      candles.forEach(c => {
+        const x = c.x;
+        if (x < -20 || x > canvas.width + 20) return;
+        const color = c.close > c.open ? '#00ff88' : '#ff4466';
+        const alpha = Math.max(0.1, 0.4 - Math.abs(x - canvas.width / 2) / canvas.width * 0.8);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, Math.min(c.open, c.close), w, Math.abs(c.close - c.open) || 2);
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, c.high);
+        ctx.lineTo(x + w / 2, c.low);
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // Ticker
+    const tickers = [
+      { s: 'BTC', p: 67842.50, c: 2.34 },
+      { s: 'ETH', p: 3456.78, c: -1.23 },
+      { s: 'AAPL', p: 178.92, c: 0.87 },
+      { s: 'NVDA', p: 876.54, c: 3.21 },
+      { s: 'TSLA', p: 245.67, c: -2.15 },
+      { s: 'MSFT', p: 415.23, c: 0.32 },
+      { s: 'GOOGL', p: 142.56, c: 1.45 },
+      { s: 'AMZN', p: 185.34, c: 0.98 }
+    ];
+    const tickerEl = document.getElementById('tickerContent');
+    const tickerHTML = tickers.map(t => `<span style="padding:0 32px;"><span class="neon-cyan">${t.s}</span> <span style="color:#ccc;">$${t.p.toLocaleString()}</span> <span style="color:${t.c >= 0 ? '#00ff88' : '#ff4466'};">${t.c >= 0 ? '+' : ''}${t.c.toFixed(2)}%</span></span>`).join('');
+    tickerEl.innerHTML = tickerHTML + tickerHTML;
+
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.display = 'block';
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+      document.getElementById('cursorPrice').textContent = '$' + (67000 + Math.sin(e.clientX * 0.01) * 2000 + Math.cos(e.clientY * 0.01) * 1000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      document.getElementById('cursorChange').textContent = (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 3).toFixed(2) + '%';
+      document.getElementById('cursorChange').className = Math.random() > 0.5 ? 'neon-green' : 'neon-red';
+    });
+    document.addEventListener('mouseleave', () => { cursor.style.display = 'none'; });
+  </script>
+</body>
+</html>
