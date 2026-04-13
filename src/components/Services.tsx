@@ -67,7 +67,7 @@ function ServiceCard({ service, index }: { service: typeof services[0], index: n
       initial={{ opacity: 0, y: 60, filter: "blur(8px)" }}
       whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.7, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] as any }}
       whileHover={{ y: -8, transition: { duration: 0.25 } }}
       onMouseMove={handleMouseMove}
       className="group relative rounded-3xl border border-white/[0.06] bg-white/[0.02] p-8 lg:p-10 overflow-hidden cursor-pointer"
@@ -136,7 +136,7 @@ export default function Services() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as any }}
           className="max-w-2xl mb-20 lg:mb-28"
         >
           <span className="inline-block px-3 py-1 rounded-full bg-cyan/10 border border-cyan/20 text-cyan text-xs font-semibold tracking-widest uppercase mb-6">

@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useState } from 'react'
 import LogoWithTransparency from './LogoWithTransparency'
 import logoImage from '../assets/fwi_logo.png'
@@ -24,7 +24,7 @@ export default function Navbar() {
       <motion.nav
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] as any }}
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           scrolled 
             ? 'py-3 bg-midnight/80 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.3)]' 

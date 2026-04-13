@@ -60,7 +60,7 @@ export default function Testimonials() {
               initial={{ opacity: 0, y: 50, filter: "blur(6px)" }}
               whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.7, delay: idx * 0.15, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.7, delay: idx * 0.15, ease: [0.16, 1, 0.3, 1] as any }}
               className="group relative rounded-3xl border border-white/[0.06] bg-white/[0.02] p-8 lg:p-10 overflow-hidden hover:border-white/10 transition-all duration-500"
             >
               {/* Subtle top glow */}

@@ -25,7 +25,7 @@ const fadeUp = {
     filter: "blur(0px)",
     transition: { 
       duration: 0.9, 
-      ease: [0.16, 1, 0.3, 1] 
+      ease: [0.16, 1, 0.3, 1] as any
     }
   }
 }
@@ -83,7 +83,7 @@ export default function Hero() {
           className="relative mb-10"
           initial={{ opacity: 0, scale: 0.7, filter: "brightness(0) blur(20px)" }}
           animate={{ opacity: 1, scale: 1, filter: "brightness(1.1) blur(0px)" }}
-          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] as any }}
         >
           {/* Multi-layered glow behind logo */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan/10 blur-[80px] rounded-full animate-pulse pointer-events-none" />
@@ -113,7 +113,7 @@ export default function Hero() {
         <motion.div 
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ delay: 1.2, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: 1.2, duration: 1.2, ease: [0.16, 1, 0.3, 1] as any }}
           className="w-full max-w-md h-[1px] bg-gradient-to-r from-transparent via-cyan/30 to-transparent mb-12"
         />
 
